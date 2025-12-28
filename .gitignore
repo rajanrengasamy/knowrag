@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 # Ignore large PDF files - keep local only
 knowledge/*.pdf
+
+# Vector database - keep local only
+/data/lancedb/

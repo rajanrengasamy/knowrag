@@ -1,5 +1,5 @@
 {
-  "name": "temp-nextjs",
+  "name": "knowrag",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,22 +11,26 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@lancedb/lancedb": "^0.23.0",
+    "dotenv": "^17.2.3",
     "llamaindex": "^0.12.1",
     "motion": "^12.23.26",
     "next": "16.1.1",
     "openai": "^6.15.0",
-    "pdf-parse": "^2.4.5",
+    "pdf-parse": "^1.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
