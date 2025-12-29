@@ -39,7 +39,7 @@ interface ModelSelectorProps {
     disabled?: boolean;
 }
 
-const springPreset = { type: "spring", stiffness: 400, damping: 30 };
+const springPreset = { type: "spring" as const, stiffness: 400, damping: 30 };
 
 /**
  * ModelSelector — Editorial Premium Dropdown

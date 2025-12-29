@@ -18,6 +18,7 @@ import { generateResponse, LLMError, formatErrorMessage } from '@/lib/llm';
 interface ChatRequest {
     query: string;
     model: 'gemini' | 'openai';
+    images?: string[];
 }
 
 /**
@@ -28,7 +29,7 @@ function validateRequest(body: unknown): body is ChatRequest {
         return false;
     }
 
-    const { query, model } = body as Record<string, unknown>;
+    const { query, model, images } = body as Record<string, unknown>;
 
     if (typeof query !== 'string' || query.trim().length === 0) {
         return false;
@@ -36,6 +37,12 @@ function validateRequest(body: unknown): body is ChatRequest {
 
     if (model !== 'gemini' && model !== 'openai') {
         return false;
+    }
+
+    if (images !== undefined) {
+        if (!Array.isArray(images) || !images.every(img => typeof img === 'string')) {
+            return false;
+        }
     }
 
     return true;
@@ -69,9 +76,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { query, model } = body;
+        const { query, model, images } = body;
 
-        console.log(`\n📩 Chat request: model=${model}, query="${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"`);
+        console.log(`\n📩 Chat request: model=${model}, query="${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"${images?.length ? ` + ${images.length} images` : ''}`);
 
         // Step 1: Query the RAG pipeline to get relevant context
         const ragResult = await queryRAG(query);
@@ -101,7 +108,8 @@ export async function POST(request: NextRequest) {
                 const citationHeader = JSON.stringify({ citations }) + '|||';
                 await writer.write(encoder.encode(citationHeader));
 
-                for await (const chunk of generateResponse(model, ragResult.context, query)) {
+                // Pass images to generateResponse
+                for await (const chunk of generateResponse(model, ragResult.context, query, images)) {
                     if (chunk.text) {
                         await writer.write(encoder.encode(chunk.text));
                     }

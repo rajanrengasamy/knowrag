@@ -20,8 +20,8 @@ export interface Citation {
 /**
  * Animation presets for editorial feel
  */
-const springPreset = { type: "spring", stiffness: 400, damping: 30 };
-const smoothPreset = { type: "spring", stiffness: 300, damping: 35 };
+const springPreset = { type: "spring" as const, stiffness: 400, damping: 30 };
+const smoothPreset = { type: "spring" as const, stiffness: 300, damping: 35 };
 
 /**
  * KnowRAG — Editorial Premium Chat Interface
@@ -47,7 +47,7 @@ export default function Home() {
 
   const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const handleSendMessage = useCallback(async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string, images: string[] = []) => {
     if (isLoading) return;
 
     if (abortControllerRef.current) {
@@ -61,7 +61,11 @@ export default function Home() {
       role: 'user',
       content,
       timestamp: new Date(),
+      images: images.length > 0 ? images : undefined,
     };
+
+    // If there are images, we might want to show them immediately
+    // The images are in the userMessage which is added to state
 
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
@@ -81,7 +85,11 @@ export default function Home() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: content, model: selectedModel }),
+        body: JSON.stringify({
+          query: content,
+          model: selectedModel,
+          images: images // Send images to API
+        }),
         signal: abortControllerRef.current.signal,
       });
 

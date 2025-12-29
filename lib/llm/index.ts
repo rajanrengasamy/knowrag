@@ -99,15 +99,16 @@ function validateModelId(modelId: string): asserts modelId is ModelId {
 export async function* generateResponse(
     modelId: string,
     context: string,
-    query: string
+    query: string,
+    images?: string[]
 ): AsyncGenerator<StreamChunk> {
     validateModelId(modelId);
 
     try {
         if (modelId === "gemini") {
-            yield* generateGeminiStream(context, query);
+            yield* generateGeminiStream(context, query, images);
         } else {
-            yield* generateOpenAIStream(context, query);
+            yield* generateOpenAIStream(context, query, images);
         }
     } catch (error: unknown) {
         // Wrap provider-specific errors in unified LLMError
@@ -134,20 +135,22 @@ export async function* generateResponse(
  * @param modelId - Which model to use ("gemini" or "openai")
  * @param context - The formatted context from RAG retrieval
  * @param query - The user's question
+ * @param images - Optional array of base64 images
  * @returns The complete response text
  */
 export async function generateFullResponse(
     modelId: string,
     context: string,
-    query: string
+    query: string,
+    images?: string[]
 ): Promise<string> {
     validateModelId(modelId);
 
     try {
         if (modelId === "gemini") {
-            return await generateGeminiResponse(context, query);
+            return await generateGeminiResponse(context, query, images);
         } else {
-            return await generateOpenAIResponse(context, query);
+            return await generateOpenAIResponse(context, query, images);
         }
     } catch (error: unknown) {
         // Wrap provider-specific errors in unified LLMError

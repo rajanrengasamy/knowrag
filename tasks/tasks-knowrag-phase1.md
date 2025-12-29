@@ -282,3 +282,39 @@ Before marking Phase 3 complete, verify:
 - [x] TypeScript compiles without errors
 - [x] Interface feels "alive" and premium to use
 
+
+---
+
+# Phase 4: Image Understanding & Multimodal
+
+## Overview
+
+Phase 4 introduces multimodal capabilities, allowing users to attach or paste images into the chat. The system will leverage Gemini 3 Flash and OpenAI models (o4-mini or compatible) to analyze these images and answer user questions.
+
+**Key References:**
+- PRD-v3.md (Phase 4 section)
+- implementation_plan.md
+
+---
+
+## Phase 4 Tasks
+
+- [ ] **17.0 Frontend Image Support**
+  - [x] 17.1 Update `ChatInput.tsx` with hidden file input and clip icon button
+  - [x] 17.2 Add `onPaste` handler to capture clipboard images
+  - [x] 17.3 Implement image state management (base64 conversion, storage)
+  - [x] 17.4 Implement thumbnail preview with remove button
+  - [x] 17.5 Update `ChatMessage.tsx` to display attached images in bubbles
+
+- [ ] **18.0 Backend & API Updates**
+  - [x] 18.1 Update `app/api/chat/route.ts` to accept `images` payload
+  - [x] 18.2 Update `lib/llm/gemini.ts` to handle image parts
+  - [x] 18.3 Update `lib/llm/openai.ts` to handle image content blocks
+  - [x] 18.4 Verify payload size handling and error states
+
+- [ ] **19.0 Integration & Testing**
+  - [ ] 19.1 Verify Gemini 3 Flash multimodal response
+  - [ ] 19.2 Verify OpenAI multimodal response (or fallback behavior)
+  - [ ] 19.3 Manual test: file attachment flow
+  - [ ] 19.4 Manual test: clipboard paste flow
+  - [ ] 19.5 Manual test: multiple images (if implemented)

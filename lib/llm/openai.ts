@@ -6,6 +6,7 @@
  */
 
 import OpenAI from "openai";
+import { ChatCompletionContentPart } from "openai/resources/index";
 
 // OpenAI model configuration
 // o4-mini is a reasoning model that supports reasoning_effort parameter
@@ -60,14 +61,29 @@ export interface StreamChunk {
  * 
  * @param systemPrompt - The system prompt with context
  * @param userQuery - The user's question
+ * @param images - Optional array of base64 images
  * @yields StreamChunk objects with text content
  */
 export async function* generateOpenAIStream(
     systemPrompt: string,
-    userQuery: string
+    userQuery: string,
+    images?: string[]
 ): AsyncGenerator<StreamChunk> {
     try {
         const openai = getClient();
+
+        // Prepare user content
+        let userContent: string | ChatCompletionContentPart[] = userQuery;
+
+        if (images && images.length > 0) {
+            userContent = [
+                { type: "text", text: userQuery },
+                ...images.map(img => ({
+                    type: "image_url",
+                    image_url: { url: img }
+                } as ChatCompletionContentPart))
+            ];
+        }
 
         // Create streaming chat completion with reasoning_effort: high
         // o4-mini supports low, medium, high reasoning effort levels
@@ -81,7 +97,7 @@ export async function* generateOpenAIStream(
             reasoning_effort: "high",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: userQuery },
+                { role: "user", content: userContent },
             ],
         });
 
@@ -152,14 +168,29 @@ export async function* generateOpenAIStream(
  * 
  * @param systemPrompt - The system prompt with context
  * @param userQuery - The user's question
+ * @param images - Optional array of base64 images
  * @returns The complete response text
  */
 export async function generateOpenAIResponse(
     systemPrompt: string,
-    userQuery: string
+    userQuery: string,
+    images?: string[]
 ): Promise<string> {
     try {
         const openai = getClient();
+
+        // Prepare user content
+        let userContent: string | ChatCompletionContentPart[] = userQuery;
+
+        if (images && images.length > 0) {
+            userContent = [
+                { type: "text", text: userQuery },
+                ...images.map(img => ({
+                    type: "image_url",
+                    image_url: { url: img }
+                } as ChatCompletionContentPart))
+            ];
+        }
 
         const response = await openai.chat.completions.create({
             model: OPENAI_MODEL,
@@ -170,7 +201,7 @@ export async function generateOpenAIResponse(
             reasoning_effort: "high",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: userQuery },
+                { role: "user", content: userContent },
             ],
         });
 

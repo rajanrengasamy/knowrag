@@ -21,6 +21,7 @@ export interface Message {
     content: string;
     timestamp: Date;
     isStreaming?: boolean;
+    images?: string[]; // Base64 strings
 }
 
 interface ChatMessageProps {
@@ -28,7 +29,7 @@ interface ChatMessageProps {
     citations?: Citation[];
 }
 
-const springPreset = { type: "spring", stiffness: 400, damping: 30 };
+const springPreset = { type: "spring" as const, stiffness: 400, damping: 30 };
 
 /**
  * Parse and render markdown content
@@ -284,6 +285,20 @@ export function ChatMessage({ message, citations }: ChatMessageProps) {
                                 STREAMING
                             </span>
                         )}
+                    </div>
+                )}
+
+                {/* Attached Images */}
+                {message.images && message.images.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        {message.images.map((img, index) => (
+                            <img
+                                key={index}
+                                src={img}
+                                alt="Attached"
+                                className="w-24 h-24 object-cover rounded-xl border border-white/20"
+                            />
+                        ))}
                     </div>
                 )}
 

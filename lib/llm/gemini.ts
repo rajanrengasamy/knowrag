@@ -5,7 +5,7 @@
  * Supports streaming responses for real-time output.
  */
 
-import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel, Part } from "@google/generative-ai";
 
 // Gemini 3 Flash Preview - released December 17, 2025
 // Supports configurable thinking levels: minimal, low, medium, high
@@ -27,6 +27,15 @@ export class GeminiError extends Error {
         super(message);
         this.name = "GeminiError";
     }
+}
+
+// Helper to parse base64 data URL
+function parseBase64Image(dataUrl: string): { mimeType: string; data: string } {
+    const matches = dataUrl.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+    if (!matches) {
+        throw new Error("Invalid base64 image format");
+    }
+    return { mimeType: matches[1], data: matches[2] };
 }
 
 /**
@@ -83,21 +92,35 @@ export interface StreamChunk {
  * 
  * @param systemPrompt - The system prompt with context
  * @param userQuery - The user's question
+ * @param images - Optional array of base64 images
  * @yields StreamChunk objects with text content
  */
 export async function* generateGeminiStream(
     systemPrompt: string,
-    userQuery: string
+    userQuery: string,
+    images?: string[]
 ): AsyncGenerator<StreamChunk> {
     try {
         const client = getClient();
 
-        // Combine system prompt and user query for Gemini
-        // Gemini handles system instructions differently
-        const fullPrompt = `${systemPrompt}\n\n## User Question:\n${userQuery}`;
+        // Prepare content parts
+        const parts: (string | Part)[] = [
+            `${systemPrompt}\n\n## User Question:\n${userQuery}`
+        ];
+
+        if (images && images.length > 0) {
+            images.forEach(img => {
+                try {
+                    const { mimeType, data } = parseBase64Image(img);
+                    parts.push({ inlineData: { mimeType, data } });
+                } catch (e) {
+                    console.error("Failed to parse image for Gemini:", e);
+                }
+            });
+        }
 
         // Start streaming generation
-        const result = await client.generateContentStream(fullPrompt);
+        const result = await client.generateContentStream(parts);
 
         // Yield chunks as they arrive
         for await (const chunk of result.stream) {
@@ -110,7 +133,7 @@ export async function* generateGeminiStream(
         // Signal completion
         yield { text: "", done: true };
     } catch (error: unknown) {
-        // Handle specific error types
+        // ... (existing error handling)
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
         if (errorMessage.includes("quota") || errorMessage.includes("rate limit")) {
@@ -152,20 +175,38 @@ export async function* generateGeminiStream(
  * 
  * @param systemPrompt - The system prompt with context
  * @param userQuery - The user's question
+ * @param images - Optional array of base64 images
  * @returns The complete response text
  */
 export async function generateGeminiResponse(
     systemPrompt: string,
-    userQuery: string
+    userQuery: string,
+    images?: string[]
 ): Promise<string> {
     try {
         const client = getClient();
-        const fullPrompt = `${systemPrompt}\n\n## User Question:\n${userQuery}`;
 
-        const result = await client.generateContent(fullPrompt);
+        // Prepare content parts
+        const parts: (string | Part)[] = [
+            `${systemPrompt}\n\n## User Question:\n${userQuery}`
+        ];
+
+        if (images && images.length > 0) {
+            images.forEach(img => {
+                try {
+                    const { mimeType, data } = parseBase64Image(img);
+                    parts.push({ inlineData: { mimeType, data } });
+                } catch (e) {
+                    console.error("Failed to parse image for Gemini:", e);
+                }
+            });
+        }
+
+        const result = await client.generateContent(parts);
         const response = result.response;
 
         return response.text();
+
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         throw new GeminiError(`Failed to generate response: ${errorMessage}`, "API_ERROR", true);

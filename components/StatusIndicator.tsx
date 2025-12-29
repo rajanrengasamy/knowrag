@@ -14,7 +14,7 @@ interface StatusIndicatorProps {
     className?: string;
 }
 
-const springPreset = { type: "spring", stiffness: 400, damping: 30 };
+const springPreset = { type: "spring" as const, stiffness: 400, damping: 30 };
 
 /**
  * StatusIndicator — Editorial Premium Status Badge

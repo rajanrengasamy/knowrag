@@ -433,3 +433,51 @@ The KnowRAG MVP is fully functional:
 Progress: **9/9 parent tasks complete** ✅
 
 ---
+
+## Session: 2025-12-29 21:00 AEST
+
+### Summary
+Resolved Next.js Turbopack cache corruption issues that were causing API failures and "Failed to fetch" errors. Fixed by switching from Turbopack to webpack bundler. Also cleaned up stray lockfiles and node_modules in home directory.
+
+### Work Completed
+- Removed stray `~/yarn.lock` file (86 bytes, leftover from July 11th)
+- Removed stray `~/node_modules/` directory (contained only `.yarn-integrity`)
+- Diagnosed Turbopack cache corruption causing `ENOENT` errors for manifest files
+- Attempted multiple cache clears (`rm -rf .next`)
+- Cleared Next.js temp cache files (`/var/folders/.../T/next-*`)
+- Updated `package.json` dev script to use `--webpack` flag instead of Turbopack
+- Performed full `node_modules` reinstall to ensure clean state
+- Verified image upload feature works with Gemini 3 Flash
+
+### Issues & Resolutions
+| Issue | Resolution | Status |
+|:------|:-----------|:-------|
+| Next.js warning: multiple lockfiles detected | Removed stray `~/yarn.lock` from home directory | Resolved |
+| Turbopack looking for modules in `~/node_modules` | Removed stray `~/node_modules/` directory | Resolved |
+| Turbopack cache corruption (ENOENT errors, FATAL panics) | Switched to webpack bundler via `--webpack` flag | Resolved |
+| "Unexpected token 'I', Internal S..." JSON parse error | Was caused by API returning 500 HTML page due to Turbopack crash | Resolved |
+| "Failed to fetch" with image attachments | Turbopack manifest corruption; fixed by webpack switch | Resolved |
+
+### Key Decisions
+- **Switched from Turbopack to webpack** - Next.js 16.1.1's Turbopack has cache corruption bugs that cause intermittent API failures. Using `next dev --webpack` for stability.
+- **Full node_modules reinstall** - Ensured no corruption propagated from previous broken state.
+
+### Learnings
+- Next.js 16 uses Turbopack by default, but Turbopack is still unstable for some workloads
+- `--webpack` flag is available to opt-out of Turbopack in Next.js 16
+- Stray `yarn.lock` or `package.json` in parent directories can cause Next.js to infer wrong workspace root
+- Turbopack stores persistent cache in temp directories (`/var/folders/.../T/next-*`) that can become corrupted
+
+### Open Items / Blockers
+- [ ] Consider pinning to a more stable Next.js version if Turbopack issues persist
+- [ ] Monitor webpack mode for any performance impact vs Turbopack
+
+### Context for Next Session
+Build environment is now stable. The `npm run dev` command uses webpack bundler instead of Turbopack via the `--webpack` flag in package.json. Image upload and multimodal queries work correctly with both Gemini 3 Flash and o4-mini models.
+
+**package.json dev script is now:**
+```json
+"dev": "next dev --webpack"
+```
+
+---
