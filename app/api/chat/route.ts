@@ -85,9 +85,22 @@ export async function POST(request: NextRequest) {
         const stream = new TransformStream();
         const writer = stream.writable.getWriter();
 
+        // Prepare citation metadata for the frontend
+        const citations = ragResult.chunks.map(chunk => ({
+            marker: chunk.citationMarker,
+            citation: chunk.citation,
+            source: chunk.source,
+            page: chunk.page,
+        }));
+
         // Start the streaming response in the background
         (async () => {
             try {
+                // Send citation metadata first with a delimiter
+                // Format: JSON_CITATIONS|||STREAM_CONTENT
+                const citationHeader = JSON.stringify({ citations }) + '|||';
+                await writer.write(encoder.encode(citationHeader));
+
                 for await (const chunk of generateResponse(model, ragResult.context, query)) {
                     if (chunk.text) {
                         await writer.write(encoder.encode(chunk.text));

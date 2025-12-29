@@ -161,3 +161,124 @@ Before marking Phase 1 complete, verify:
 - [x] Both models (Gemini 3 Flash, o4-mini) return responses with citations
 - [x] UI displays status, allows model selection, shows streamed responses
 - [x] At least 3 of 4 validation queries return accurate, cited answers
+
+---
+
+# Phase 3: Modern UI with Motion Animations
+
+## Overview
+
+Phase 3 focuses on transforming KnowRAG into a **premium, delightful user experience** using **Motion** (formerly Framer Motion) for React animations. The goal is to make the interface feel responsive, alive, and modern with smooth spring-physics animations, micro-interactions, and polished visual design.
+
+**Key References:**
+- PRD-v2.md (Phase 3 section) - Detailed requirements and specifications
+- Motion library already installed (`motion: ^12.23.26`)
+- Current Tailwind CSS 4 setup
+
+---
+
+## Phase 3 Tasks
+
+- [x] **9.0 Motion Animation Foundation**
+  - [x] 9.1 Create `lib/motion/` directory for shared animation utilities
+  - [x] 9.2 Create `lib/motion/presets.ts` with transition presets (spring, springGentle, springQuick, fade, fadeSlow)
+  - [x] 9.3 Add animation variant exports (fadeInUp, fadeInSlide, scaleIn, staggerContainer)
+  - [x] 9.4 Add hover/tap state exports (hoverLift, hoverScale, tapScale) with proper TypeScript types
+  - [x] 9.5 Create `lib/motion/hooks.ts` with `useReducedMotion` hook for accessibility
+  - [x] 9.6 Verify Motion imports work correctly (`import { motion, AnimatePresence } from "motion/react"`)
+  - [x] 9.7 Test presets compile without TypeScript errors
+
+- [x] **10.0 ChatMessage Animation Enhancement**
+  - [x] 10.1 Import Motion and shared presets in `components/ChatMessage.tsx`
+  - [x] 10.2 Convert message container `<div>` to `<motion.div>`
+  - [x] 10.3 Add directional slide animation (user: slide from right, assistant: slide from left)
+  - [x] 10.4 Add subtle scale animation on appear (scale: 0.95 → 1)
+  - [x] 10.5 Add hover lift effect (translateY: -2px with shadow increase)
+  - [x] 10.6 Add `layout` prop for smooth message reordering animations
+  - [x] 10.7 Enhance streaming cursor with smooth opacity transition (not sudden blink)
+  - [x] 10.8 Add subtle pulse animation to citation badges on first appearance
+  - [x] 10.9 Update `TypingIndicator` with staggered bouncing dots using Motion
+  - [x] 10.10 Test message animations with both user and assistant messages
+
+- [x] **11.0 ModelSelector Animation Enhancement**
+  - [x] 11.1 Import Motion and AnimatePresence in `components/ModelSelector.tsx`
+  - [x] 11.2 Wrap dropdown with `<AnimatePresence>` for exit animations
+  - [x] 11.3 Convert dropdown container to `<motion.div>` with scale + opacity animation
+  - [x] 11.4 Set transform origin to top-right for natural dropdown appearance
+  - [x] 11.5 Add staggered fade-in for dropdown options with delay per item
+  - [x] 11.6 Add `whileHover` and `whileTap` states to option buttons
+  - [x] 11.7 Animate chevron rotation smoothly when dropdown opens/closes
+  - [x] 11.8 Add subtle scale feedback on trigger button tap
+  - [x] 11.9 Test dropdown animation open/close behavior
+
+- [x] **12.0 ChatInput Animation Enhancement**
+  - [x] 12.1 Import Motion and shared presets in `components/ChatInput.tsx`
+  - [x] 12.2 Add focus state tracking with useState
+  - [x] 12.3 Convert input container to `<motion.div>` with animated box-shadow on focus
+  - [x] 12.4 Convert send button to `<motion.button>` with scale animations
+  - [x] 12.5 Add `whileHover` (scale: 1.05) and `whileTap` (scale: 0.95) to send button
+  - [x] 12.6 Add animated focus ring transition (ring-offset smooth transition)
+  - [x] 12.7 Add subtle entrance animation for keyboard hint text
+  - [x] 12.8 Test input focus/unfocus animation and send button feedback
+
+- [x] **13.0 StatusIndicator Animation Enhancement**
+  - [x] 13.1 Import Motion in `components/StatusIndicator.tsx`
+  - [x] 13.2 Create loading skeleton state with shimmer animation
+  - [x] 13.3 Add `<AnimatePresence>` wrapper for status transitions
+  - [x] 13.4 Add fade-in animation when status loads
+  - [x] 13.5 Enhance "Ready" badge pulse animation using Motion
+  - [x] 13.6 Add subtle scale animation to status dot on state change
+  - [x] 13.7 Test skeleton → loaded state transition
+
+- [x] **14.0 Page Layout Orchestration**
+  - [x] 14.1 Import Motion in `app/page.tsx`
+  - [x] 14.2 Create container animation variants with stagger config
+  - [x] 14.3 Create item animation variants for header, status, main, footer
+  - [x] 14.4 Convert main layout elements to motion components
+  - [x] 14.5 Implement orchestrated entrance sequence (header → status → main → footer)
+  - [x] 14.6 Add floating animation to empty state icon using Motion
+  - [x] 14.7 Add staggered entrance for suggestion pills in empty state
+  - [x] 14.8 Wrap message list with `<AnimatePresence>` for exit animations
+  - [x] 14.9 Verify entrance animation completes within 600ms
+  - [x] 14.10 Test page load feels cohesive and polished
+
+- [ ] **15.0 Enhanced CSS & Visual Polish**
+  - [x] 15.1 Add `.glass-premium` class with enhanced blur (20px) and saturation
+  - [x] 15.2 Add `.shimmer` keyframe animation for loading skeletons
+  - [x] 15.3 Add `.float` keyframe animation for subtle vertical oscillation
+  - [x] 15.4 Add `.ambient-glow` class for premium shadow effects
+  - [x] 15.5 Add animated gradient border utility (`.gradient-border`)
+  - [x] 15.6 Enhance scrollbar with smooth color transition on hover
+  - [x] 15.7 Update header to use `.glass-premium` class
+  - [x] 15.8 Add refined shadows to message bubbles with accent color tinting
+  - [x] 15.10 Verify all CSS utilities work correctly in dark mode
+
+- [x] **16.0 Testing & Validation - Phase 3**
+  - [x] 16.1 Verify `npm run dev` starts without errors after all changes
+  - [x] 16.2 Verify `npm run build` compiles without TypeScript errors
+  - [x] 16.3 Test page load animation sequence completes smoothly
+  - [x] 16.4 Test user messages animate from right, assistant from left
+  - [x] 16.5 Test model selector dropdown animates open/close correctly
+  - [x] 16.6 Test send button has satisfying spring tap feedback
+  - [x] 16.7 Test typing indicator has smooth wave animation across dots
+  - [x] 16.8 Verify hover states feel responsive (< 100ms reaction time)
+  - [x] 16.9 Test with `prefers-reduced-motion: reduce` enabled in system settings
+  - [x] 16.10 Verify no animation jank or dropped frames during interactions
+  - [x] 16.11 Confirm all animations use GPU-accelerated properties (transform, opacity)
+  - [x] 16.12 Verify no layout shift (CLS) during animations
+  - [x] 16.13 Document any issues or future improvements in journal.md
+
+---
+
+## Phase 3 Complete Checklist
+
+Before marking Phase 3 complete, verify:
+
+- [x] All 4 components use Motion for animations (ChatMessage, ModelSelector, ChatInput, StatusIndicator)
+- [x] Page load has orchestrated entrance sequence
+- [x] Shared motion presets are used consistently across components
+- [x] All animations run at 60fps without jank
+- [x] Reduced motion preference is respected
+- [x] TypeScript compiles without errors
+- [x] Interface feels "alive" and premium to use
+

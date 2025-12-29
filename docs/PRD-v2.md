@@ -301,3 +301,472 @@ The system prompt must instruct the LLM to:
 |---------|------|---------|
 | v1 | 2024-12-22 | Initial draft with GPT-5.2/Gemini 3 Pro |
 | v2 | 2024-12-28 | Revised after discussion: o4-mini + Gemini 3 Flash Thinking, phased approach, validated pricing |
+| v3 | 2024-12-29 | Added Phase 3: Slick Modern UI with Tailwind CSS + Motion |
+
+---
+
+# PHASE 3: Slick Modern UI - Motion & Enhanced Styling
+
+## Overview
+
+Phase 3 transforms KnowRAG from a functional application into a **premium, delightful user experience**. Using **Motion** (formerly Framer Motion) - the gold standard for React animations - combined with refined Tailwind CSS styling, we'll create an interface that feels responsive, alive, and modern.
+
+**Why Motion?**
+- Industry-standard library for production-grade React animations
+- Declarative API with powerful layout animations
+- Spring physics for natural-feeling motion
+- Built-in gesture support (hover, tap, drag)
+- Optimized performance with automatic GPU acceleration
+
+---
+
+## Phase 3 Goals
+
+1. **Seamless Page Load Experience** - Orchestrated entrance animations that guide user attention
+2. **Fluid Message Animations** - Natural, physics-based chat message transitions
+3. **Interactive Micro-interactions** - Delightful hover states, button feedback, and focus indicators
+4. **Professional Loading States** - Skeleton loaders and shimmer effects during data fetching
+5. **Polished Visual Design** - Refined color palette, enhanced glassmorphism, subtle gradients
+6. **Accessibility Preserved** - All animations respect `prefers-reduced-motion`
+
+---
+
+## Design Philosophy
+
+### Animation Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Purpose** | Every animation must serve a purpose: guide attention, provide feedback, or indicate state change |
+| **Subtlety** | Prefer 200-400ms durations; avoid jarring or slow animations |
+| **Physics** | Use spring animations for natural feel (stiffness: 300, damping: 25) |
+| **Consistency** | Reusable animation variants across all components |
+| **Performance** | Animate only `transform` and `opacity` for 60fps |
+
+### Motion Design Tokens
+
+```typescript
+// Shared animation presets for consistency
+export const motionPresets = {
+  // Standard spring for UI elements
+  spring: { type: "spring", stiffness: 300, damping: 25 },
+  
+  // Gentle spring for larger elements
+  gentleSpring: { type: "spring", stiffness: 200, damping: 30 },
+  
+  // Quick spring for micro-interactions
+  quickSpring: { type: "spring", stiffness: 500, damping: 30 },
+  
+  // Standard fade duration
+  fade: { duration: 0.2 },
+  
+  // Stagger delay for lists
+  stagger: { staggerChildren: 0.05 },
+};
+```
+
+---
+
+## Functional Requirements - Phase 3
+
+### FR7: Entrance Animations
+
+| ID | Requirement |
+|----|-------------|
+| FR7.1 | Header must fade in and slide down on initial page load (translateY: -20px → 0) |
+| FR7.2 | Status bar must animate in after header with staggered delay (100ms) |
+| FR7.3 | Empty state (welcome message) must scale in from center with spring physics |
+| FR7.4 | Chat input must slide up from bottom with fade |
+| FR7.5 | All entrance animations must complete within 600ms of page load |
+| FR7.6 | AnimatePresence must wrap dynamic content for exit animations |
+
+### FR8: Message Animations
+
+| ID | Requirement |
+|----|-------------|
+| FR8.1 | User messages must slide in from right (translateX: 30px → 0) with fade |
+| FR8.2 | Assistant messages must slide in from left (translateX: -30px → 0) with fade |
+| FR8.3 | Messages must have subtle scale animation on appear (scale: 0.95 → 1) |
+| FR8.4 | Typing indicator dots must have staggered bounce animation with spring physics |
+| FR8.5 | Message bubbles must have hover state with subtle lift effect (translateY: -2px, shadow increase) |
+| FR8.6 | Citations within messages must have subtle pulse animation on first appearance |
+| FR8.7 | Streaming cursor must have smooth blink animation (opacity transition, not sudden) |
+
+### FR9: Interactive Elements
+
+| ID | Requirement |
+|----|-------------|
+| FR9.1 | Send button must have scale animation on tap (0.95) with spring bounce-back |
+| FR9.2 | Model selector dropdown must animate open/close with scale + opacity (origin: top-right) |
+| FR9.3 | Model selector options must stagger fade-in when dropdown opens |
+| FR9.4 | Suggestion pills (empty state) must have hover scale (1.02) and glow effect |
+| FR9.5 | All focusable elements must have animated focus ring (ring-offset transition) |
+| FR9.6 | Status indicator "Ready" badge must have subtle pulse animation |
+
+### FR10: Loading & Skeleton States
+
+| ID | Requirement |
+|----|-------------|
+| FR10.1 | Status indicator must show animated skeleton on initial load (shimmer effect) |
+| FR10.2 | Typing indicator must have wave animation across dots (not simultaneous) |
+| FR10.3 | "Thinking" state must show animated gradient background on assistant bubble |
+| FR10.4 | Loading states must use consistent shimmer animation (45deg gradient sweep) |
+
+### FR11: Enhanced Visual Design
+
+| ID | Requirement |
+|----|-------------|
+| FR11.1 | Background must have subtle animated noise texture for depth |
+| FR11.2 | Header glass effect must have increased blur (16px) with refined opacity |
+| FR11.3 | Message bubbles must have refined shadows with color tinting (accent color for user) |
+| FR11.4 | Scrollbar must have smooth color transition on hover |
+| FR11.5 | Input focus state must have animated border gradient |
+| FR11.6 | Empty state icon must have floating animation (subtle translateY oscillation) |
+
+### FR12: Reduced Motion Support
+
+| ID | Requirement |
+|----|-------------|
+| FR12.1 | All animations must respect `prefers-reduced-motion: reduce` media query |
+| FR12.2 | Reduced motion mode must disable all transform animations |
+| FR12.3 | Reduced motion mode must retain opacity transitions (fade only) |
+| FR12.4 | Essential feedback (button press state) must still function in reduced motion |
+
+---
+
+## Component Specifications
+
+### 1. Motion-Enhanced ChatMessage
+
+```tsx
+// Target animation behavior for ChatMessage.tsx
+<motion.div
+  initial={{ opacity: 0, x: isUser ? 30 : -30, scale: 0.95 }}
+  animate={{ opacity: 1, x: 0, scale: 1 }}
+  exit={{ opacity: 0, scale: 0.95 }}
+  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+  whileHover={{ y: -2, transition: { duration: 0.2 } }}
+  layout // Enable layout animations for smooth reordering
+>
+  {/* Message content */}
+</motion.div>
+```
+
+### 2. Motion-Enhanced ModelSelector
+
+```tsx
+// Dropdown animation with AnimatePresence
+<AnimatePresence>
+  {isOpen && (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      style={{ transformOrigin: "top right" }}
+    >
+      {models.map((model, i) => (
+        <motion.button
+          key={model.id}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.05 }}
+          whileHover={{ backgroundColor: "var(--muted)" }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {/* Option content */}
+        </motion.button>
+      ))}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+### 3. Motion-Enhanced ChatInput
+
+```tsx
+// Send button with tap feedback
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+>
+  {/* Send icon */}
+</motion.button>
+
+// Input container with focus animation
+<motion.div
+  animate={{
+    boxShadow: isFocused 
+      ? "0 0 0 3px rgba(99, 102, 241, 0.3)"
+      : "0 0 0 0px rgba(99, 102, 241, 0)"
+  }}
+  transition={{ duration: 0.2 }}
+>
+  {/* Input field */}
+</motion.div>
+```
+
+### 4. Enhanced TypingIndicator
+
+```tsx
+// Staggered bouncing dots with spring physics
+const dotVariants = {
+  initial: { y: 0 },
+  animate: { 
+    y: [0, -8, 0],
+    transition: {
+      duration: 0.6,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
+  }
+};
+
+<motion.div className="flex gap-1">
+  {[0, 1, 2].map((i) => (
+    <motion.div
+      key={i}
+      variants={dotVariants}
+      initial="initial"
+      animate="animate"
+      style={{ animationDelay: `${i * 0.15}s` }}
+      className="w-2 h-2 rounded-full bg-accent"
+    />
+  ))}
+</motion.div>
+```
+
+### 5. Page Layout Orchestration
+
+```tsx
+// Orchestrated entrance animations in page.tsx
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 25 }
+  }
+};
+
+<motion.div variants={containerVariants} initial="hidden" animate="visible">
+  <motion.header variants={itemVariants}>...</motion.header>
+  <motion.div variants={itemVariants}>Status Bar</motion.div>
+  <motion.main variants={itemVariants}>...</motion.main>
+  <motion.footer variants={itemVariants}>...</motion.footer>
+</motion.div>
+```
+
+---
+
+## CSS Enhancements
+
+### New Utility Classes
+
+```css
+/* globals.css additions for Phase 3 */
+
+/* Enhanced glassmorphism */
+.glass-premium {
+  background: rgba(20, 20, 32, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Shimmer loading effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--muted-foreground) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Ambient glow for premium feel */
+.ambient-glow {
+  box-shadow: 
+    0 0 40px rgba(99, 102, 241, 0.15),
+    0 0 80px rgba(168, 85, 247, 0.1);
+}
+
+/* Animated gradient border */
+@keyframes gradient-rotate {
+  0% { --rotation: 0deg; }
+  100% { --rotation: 360deg; }
+}
+
+.gradient-border {
+  position: relative;
+  background: var(--card);
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--rotation, 0deg),
+    var(--accent),
+    #a855f7,
+    #ec4899,
+    var(--accent)
+  );
+  z-index: -1;
+  animation: gradient-rotate 3s linear infinite;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  /* Keep opacity transitions for essential feedback */
+  .motion-safe {
+    transition: opacity 0.15s ease !important;
+  }
+}
+```
+
+---
+
+## New Shared Utilities
+
+### lib/motion/presets.ts
+
+Create a shared file for Motion animation presets to ensure consistency:
+
+```typescript
+// lib/motion/presets.ts
+
+import type { Transition, Variants } from "motion/react";
+
+// Transition presets
+export const transitions = {
+  spring: { type: "spring", stiffness: 300, damping: 25 } as Transition,
+  springGentle: { type: "spring", stiffness: 200, damping: 30 } as Transition,
+  springQuick: { type: "spring", stiffness: 500, damping: 30 } as Transition,
+  fade: { duration: 0.2 } as Transition,
+  fadeSlow: { duration: 0.4 } as Transition,
+} as const;
+
+// Common animation variants
+export const fadeInUp: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: transitions.spring
+  },
+  exit: { opacity: 0, y: 10 }
+};
+
+export const fadeInSlide: Variants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: transitions.spring
+  },  
+  exit: { opacity: 0, x: -10 }
+};
+
+export const scaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: transitions.spring
+  },
+  exit: { opacity: 0, scale: 0.95 }
+};
+
+export const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1
+    }
+  }
+};
+
+// Hover states
+export const hoverLift = {
+  y: -2,
+  transition: { duration: 0.2 }
+};
+
+export const hoverScale = {
+  scale: 1.02,
+  transition: transitions.springQuick
+};
+
+export const tapScale = {
+  scale: 0.95,
+  transition: transitions.springQuick
+};
+```
+
+---
+
+## Success Metrics - Phase 3
+
+| Metric | Target |
+|--------|--------|
+| Animation Performance | All animations run at 60fps (no jank) |
+| Motion Library Integration | All 4 components use Motion for animations |
+| Entrance Orchestration | Page load feels cohesive and polished |
+| Reduced Motion | All animations respect system preferences |
+| User Delight | Interface feels "alive" and responsive to interaction |
+| Code Quality | Shared presets used across all components |
+
+---
+
+## Testing Checklist - Phase 3
+
+- [ ] Page load animation sequence completes smoothly
+- [ ] Messages animate correctly (user from right, assistant from left)
+- [ ] Model selector dropdown animates open/close
+- [ ] Send button has satisfying tap feedback
+- [ ] Typing indicator has smooth wave animation
+- [ ] Hover states feel responsive (< 100ms reaction)
+- [ ] Test with `prefers-reduced-motion: reduce` enabled
+- [ ] No animation jank on low-end devices
+- [ ] All animations use GPU acceleration (`transform`, `opacity`)
+- [ ] No layout shift during animations

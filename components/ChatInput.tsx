@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { motion } from "motion/react";
 
 interface ChatInputProps {
     onSend: (message: string) => void;
@@ -8,12 +9,21 @@ interface ChatInputProps {
     placeholder?: string;
 }
 
+const springPreset = { type: "spring", stiffness: 400, damping: 30 };
+
 /**
- * ChatInput - Text input component for sending messages
- * Task 7.5 - Features auto-resize textarea, keyboard shortcuts, and premium styling
+ * ChatInput — Editorial Premium Input Component
+ * 
+ * Features: Animated focus states, gradient send button,
+ * auto-resize textarea, keyboard hints
  */
-export function ChatInput({ onSend, disabled = false, placeholder = 'Ask a question about your documents...' }: ChatInputProps) {
+export function ChatInput({
+    onSend,
+    disabled = false,
+    placeholder = 'Ask about your documents...'
+}: ChatInputProps) {
     const [message, setMessage] = useState('');
+    const [isFocused, setIsFocused] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Auto-resize textarea
@@ -21,11 +31,11 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Ask a quest
         const textarea = textareaRef.current;
         if (textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
         }
     }, [message]);
 
-    // Focus input on mount
+    // Focus on mount
     useEffect(() => {
         if (textareaRef.current && !disabled) {
             textareaRef.current.focus();
@@ -37,7 +47,6 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Ask a quest
         if (trimmedMessage && !disabled) {
             onSend(trimmedMessage);
             setMessage('');
-            // Reset height
             if (textareaRef.current) {
                 textareaRef.current.style.height = 'auto';
             }
@@ -45,7 +54,6 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Ask a quest
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-        // Send on Enter (without Shift)
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
@@ -55,74 +63,111 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Ask a quest
     const isSubmitDisabled = disabled || !message.trim();
 
     return (
-        <div className="relative">
-            <div
+        <div className="space-y-3">
+            <motion.div
+                animate={{
+                    borderColor: isFocused ? "var(--accent-primary)" : "var(--border-default)",
+                    boxShadow: isFocused
+                        ? "0 0 0 4px rgba(245, 158, 11, 0.1), 0 8px 32px rgba(0, 0, 0, 0.2)"
+                        : "0 4px 24px rgba(0, 0, 0, 0.15)"
+                }}
+                transition={{ duration: 0.2 }}
                 className={`
-          flex items-end gap-3 p-4 rounded-2xl
-          bg-[var(--muted)] border border-[var(--border)]
-          transition-all duration-200
-          focus-within:border-[var(--accent)] focus-within:shadow-lg focus-within:shadow-[var(--accent)]/10
-          ${disabled ? 'opacity-60' : ''}
-        `}
+                    flex items-end gap-4 p-4 rounded-2xl
+                    bg-[var(--bg-surface)] border
+                    ${disabled ? 'opacity-60' : ''}
+                `}
             >
                 {/* Textarea */}
-                <textarea
-                    id="chat-input"
-                    ref={textareaRef}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={disabled}
-                    placeholder={placeholder}
-                    rows={1}
-                    className={`
-            flex-1 resize-none bg-transparent
-            text-[var(--foreground)] placeholder-[var(--muted-foreground)]
-            text-sm leading-relaxed
-            focus:outline-none
-            disabled:cursor-not-allowed
-            min-h-[24px] max-h-[200px]
-          `}
-                    aria-label="Message input"
-                />
+                <div className="flex-1 relative">
+                    <textarea
+                        id="chat-input"
+                        ref={textareaRef}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        disabled={disabled}
+                        placeholder={placeholder}
+                        rows={1}
+                        className="
+                            w-full resize-none bg-transparent
+                            text-[var(--text-primary)] placeholder-[var(--text-tertiary)]
+                            text-[15px] leading-relaxed
+                            focus:outline-none
+                            disabled:cursor-not-allowed
+                            min-h-[28px] max-h-[160px]
+                        "
+                        aria-label="Message input"
+                    />
+                </div>
 
                 {/* Send Button */}
-                <button
+                <motion.button
                     id="send-button"
                     type="button"
                     onClick={handleSend}
                     disabled={isSubmitDisabled}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={springPreset}
                     className={`
-            flex-shrink-0 p-2.5 rounded-xl
-            bg-[var(--accent)] text-[var(--accent-foreground)]
-            transition-all duration-200 ease-out
-            hover:bg-[var(--accent-hover)] hover:scale-105
-            active:scale-95
-            disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
-            focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50
-          `}
+                        relative flex-shrink-0 p-3 rounded-xl
+                        bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-tertiary)]
+                        text-[var(--bg-primary)] font-semibold
+                        shadow-lg shadow-[var(--accent-primary)]/25
+                        disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)]
+                        transition-shadow duration-200
+                    `}
                     aria-label="Send message"
                 >
+                    {/* Button glow */}
+                    {!isSubmitDisabled && (
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-tertiary)] blur-xl opacity-40" />
+                    )}
                     <svg
-                        className="w-5 h-5"
+                        className="relative w-5 h-5"
                         fill="none"
                         stroke="currentColor"
+                        strokeWidth={2.5}
                         viewBox="0 0 24 24"
                     >
                         <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                            d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
                         />
                     </svg>
-                </button>
-            </div>
+                </motion.button>
+            </motion.div>
 
-            {/* Keyboard hint */}
-            <p className="mt-2 text-center text-[10px] text-[var(--muted-foreground)]">
-                Press <kbd className="px-1.5 py-0.5 rounded bg-[var(--muted)] border border-[var(--border)] font-mono text-[10px]">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 rounded bg-[var(--muted)] border border-[var(--border)] font-mono text-[10px]">Shift+Enter</kbd> for new line
-            </p>
+            {/* Keyboard hints */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex items-center justify-center gap-4 text-[10px] font-mono text-[var(--text-tertiary)]"
+            >
+                <span className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-elevated)] border border-[var(--border-default)]">
+                        ↵
+                    </kbd>
+                    SEND
+                </span>
+                <span className="text-[var(--border-strong)]">•</span>
+                <span className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-elevated)] border border-[var(--border-default)]">
+                        ⇧
+                    </kbd>
+                    +
+                    <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-elevated)] border border-[var(--border-default)]">
+                        ↵
+                    </kbd>
+                    NEW LINE
+                </span>
+            </motion.div>
         </div>
     );
 }
