@@ -8,6 +8,81 @@ This file maintains session history for continuity across coding sessions.
 
 ---
 
+## Session: 2025-12-29 21:57 AEDT
+
+### Summary
+Refactored PDF handling to be per-message attachments (like images) with temporary in-memory indexing and no vector DB writes, while keeping the knowledge graph intact. Added GPT-4o vision routing, stricter upload limits, cleanup utilities, and updated docs/scripts to reflect the new attachment workflow.
+
+### Work Completed
+- Created and maintained `tasks/codex-todo.md` with phased checklist; re-scoped Phase 4 to PDF attachments (no DB writes) and marked completed items
+- Aligned RAG prompting to use `[n]` badges instead of `(Book Title, p. XX)` and added a consistent "no info" fallback message
+- Reworked chat backend to:
+  - Build system prompts from retrieved chunks
+  - Auto-switch to `gpt-4o` when images are attached
+  - Enforce image limits (type/size/count) with clear errors
+  - Merge results from the persistent LanceDB index with temporary PDF attachment matches
+- Added GPT-4o to LLM layer and UI model selector; enforced text-only for o4-mini and guarded reasoning options accordingly
+- Implemented temporary PDF attachment indexing with TTL caching and query-time L2 similarity search
+- Added PDF attachment support in chat input:
+  - Upload PDFs to `data/uploads/`
+  - Display PDF chips with remove actions
+  - Respect max PDF count and size limits
+  - Disable send while uploads are in flight
+- Removed persistent PDF ingestion UI/routes/status indicators to avoid mutating the knowledge graph
+- Added cleanup utility to purge `data/uploads/` and clear the in-memory temp PDF cache
+- Updated README and `.env.example` for new attachment workflow, limits, sanity and cleanup scripts
+- Added sanity-check script for PDF attachments and improved LLM test citation detection
+- Added MIT `LICENSE` and updated `.gitignore` to keep local uploads out of version control
+
+### Files Added
+- `lib/rag/temporary.ts` (temporary PDF index + TTL cache)
+- `app/api/uploads/cleanup/route.ts` (clear uploads + temp cache)
+- `scripts/sanity-attachment.ts` (PDF attachment sanity test)
+- `scripts/cleanup-uploads.ts` (cleanup utility)
+- `LICENSE`
+- `tasks/codex-todo.md`
+
+### Files Removed
+- `app/api/ingest/route.ts` (persistent ingestion endpoint)
+- `lib/rag/ingest-state.ts` (ingestion status tracking)
+- `components/PdfUploader.tsx` (ingestion UI)
+
+### Issues & Resolutions
+| Issue | Resolution | Status |
+|:------|:-----------|:-------|
+| Need to keep knowledge graph immutable while still asking about PDFs | Switched to per-message PDF attachments with temporary indexing and merged retrieval | Resolved |
+| o4-mini vision mismatch | Added GPT-4o routing for images, block images on o4-mini | Resolved |
+| Large upload risks | Added size/count validation for images and PDFs, plus cleanup utility | Resolved |
+
+### Key Decisions
+- **PDFs are attachments, not ingestion**: uploaded PDFs are stored in `data/uploads/` and processed in-memory with TTL; no LanceDB writes
+- **Vision auto-switch**: when images are attached, the backend auto-switches to GPT-4o
+- **Safety limits**: default 200MB PDF limit, 3 PDFs per message, 5MB per image, 4 images per message
+
+### Learnings
+- Keeping PDF attachments out of the persistent index avoids accidental knowledge graph mutations
+- Merging temporary attachment search results with LanceDB retrieval preserves relevance while keeping the core index stable
+- Explicit `[n]` citations simplify tooltip mapping in the UI
+
+### Open Items / Blockers
+- [ ] Run sanity flow with a real PDF and keys: `npx tsx scripts/sanity-attachment.ts --pdf /path/to/file.pdf`
+- [ ] Optional: add UI button to trigger cleanup endpoint if desired
+
+### Context for Next Session
+PDFs now behave like images: attach up to 3 PDFs per message, ask questions against the existing knowledge base + attachments, and get `[n]` citation badges with tooltips. Temporary PDF vectors are cached in memory with TTL and can be purged via:
+
+```bash
+npx tsx scripts/cleanup-uploads.ts
+```
+
+Sanity test for attachments:
+
+```bash
+npx tsx scripts/sanity-attachment.ts --pdf /path/to/file.pdf --query "Summarize this report"
+```
+
+---
+
 ## Session: 2025-12-28 ~22:30 AEST
 
 ### Summary

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 /**
  * Available LLM models
  */
-export type ModelType = 'gemini' | 'openai';
+export type ModelType = 'gemini' | 'openai' | 'gpt-4o';
 
 interface ModelOption {
     id: ModelType;
@@ -30,6 +30,13 @@ const models: ModelOption[] = [
         description: 'Fast reasoning model',
         icon: '⚡',
         color: 'var(--accent-primary)',
+    },
+    {
+        id: 'gpt-4o',
+        name: 'GPT-4o',
+        description: 'Vision + text (auto on images)',
+        icon: '🛰️',
+        color: 'var(--accent-tertiary)',
     },
 ];
 

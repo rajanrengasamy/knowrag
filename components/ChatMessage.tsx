@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from "motion/react";
 
 export type MessageRole = 'user' | 'assistant';
@@ -22,6 +22,7 @@ export interface Message {
     timestamp: Date;
     isStreaming?: boolean;
     images?: string[]; // Base64 strings
+    pdfs?: string[];
 }
 
 interface ChatMessageProps {
@@ -120,6 +121,11 @@ function CitationBadge({
     citation?: Citation;
 }) {
     const [isHovered, setIsHovered] = useState(false);
+    const sourceLabel =
+        citation && typeof citation.source === 'string'
+            ? citation.source.replace(/\.pdf$/i, '')
+            : 'Unknown source';
+    const pageLabel = citation && Number.isFinite(citation.page) ? citation.page : 'N/A';
 
     return (
         <span
@@ -154,10 +160,10 @@ function CitationBadge({
                                     Source {citation.marker}
                                 </div>
                                 <div className="text-sm font-medium text-[var(--text-primary)] leading-tight">
-                                    {citation.source.replace(/\.pdf$/i, '')}
+                                    {sourceLabel}
                                 </div>
                                 <div className="text-xs text-[var(--text-tertiary)]">
-                                    Page {citation.page}
+                                    Page {pageLabel}
                                 </div>
                             </div>
                         </div>
@@ -242,19 +248,10 @@ function renderInlineMarkdown(text: string, citations?: Citation[]): React.React
  * ChatMessage — Editorial Premium Message Bubble
  */
 export function ChatMessage({ message, citations }: ChatMessageProps) {
-    const messageRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (message.isStreaming && messageRef.current) {
-            messageRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }
-    }, [message.content, message.isStreaming]);
-
     const isUser = message.role === 'user';
 
     return (
         <motion.div
-            ref={messageRef}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={springPreset}
@@ -298,6 +295,30 @@ export function ChatMessage({ message, citations }: ChatMessageProps) {
                                 alt="Attached"
                                 className="w-24 h-24 object-cover rounded-xl border border-white/20"
                             />
+                        ))}
+                    </div>
+                )}
+
+                {message.pdfs && message.pdfs.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                        {message.pdfs.map((pdf, index) => (
+                            <div
+                                key={`${pdf}-${index}`}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-xl ${
+                                    isUser
+                                        ? 'bg-white/20 border border-white/30'
+                                        : 'bg-[var(--bg-elevated)] border border-[var(--border-default)]'
+                                }`}
+                            >
+                                <span className="text-sm">📄</span>
+                                <span
+                                    className={`text-xs font-mono max-w-[180px] truncate ${
+                                        isUser ? 'text-white/90' : 'text-[var(--text-tertiary)]'
+                                    }`}
+                                >
+                                    {pdf}
+                                </span>
+                            </div>
                         ))}
                     </div>
                 )}

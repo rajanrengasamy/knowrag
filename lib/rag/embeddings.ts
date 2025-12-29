@@ -10,6 +10,8 @@ import OpenAI from 'openai';
 // Embedding configuration
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const EMBEDDING_DIMENSIONS = 1536; // Default for text-embedding-3-small
+const MAX_BATCH_SIZE = Number(process.env.OPENAI_EMBEDDING_MAX_BATCH || 256);
+const MAX_BATCH_TOKENS = Number(process.env.OPENAI_EMBEDDING_MAX_TOKENS || 200000);
 
 // Singleton OpenAI client
 let openaiClient: OpenAI | null = null;
@@ -63,13 +65,36 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
 
     const client = getOpenAIClient();
 
-    // OpenAI API allows batching up to 2048 texts
-    // For very large batches, we may need to chunk
-    const MAX_BATCH_SIZE = 2048;
+    const estimateTokens = (text: string) => Math.ceil(text.length / 4);
     const embeddings: number[][] = [];
 
-    for (let i = 0; i < texts.length; i += MAX_BATCH_SIZE) {
-        const batch = texts.slice(i, i + MAX_BATCH_SIZE);
+    const batches: string[][] = [];
+    let currentBatch: string[] = [];
+    let currentTokens = 0;
+
+    for (const text of texts) {
+        const tokenEstimate = estimateTokens(text);
+        const wouldOverflowTokens = currentTokens + tokenEstimate > MAX_BATCH_TOKENS;
+        const wouldOverflowCount = currentBatch.length >= MAX_BATCH_SIZE;
+
+        if (currentBatch.length > 0 && (wouldOverflowTokens || wouldOverflowCount)) {
+            batches.push(currentBatch);
+            currentBatch = [];
+            currentTokens = 0;
+        }
+
+        currentBatch.push(text);
+        currentTokens += tokenEstimate;
+    }
+
+    if (currentBatch.length > 0) {
+        batches.push(currentBatch);
+    }
+
+    for (const batch of batches) {
+        if (batch.length === 0) {
+            continue;
+        }
 
         const response = await client.embeddings.create({
             model: EMBEDDING_MODEL,

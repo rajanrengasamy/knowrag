@@ -134,6 +134,7 @@ export function StatusIndicator({ className = '' }: StatusIndicatorProps) {
                             READY
                         </motion.span>
                     )}
+
                 </motion.div>
             )}
         </AnimatePresence>

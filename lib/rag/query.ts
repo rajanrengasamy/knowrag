@@ -7,6 +7,7 @@
 
 import { embedText } from './embeddings';
 import { searchSimilar, type VectorRecord } from './vectordb';
+import { generateSystemPrompt } from '@/lib/prompts/rag-prompt';
 
 /**
  * Retrieved chunk with formatted citation info
@@ -18,6 +19,8 @@ export interface RetrievedChunk {
     source: string;
     /** Page number in PDF */
     page: number;
+    /** Chunk index within the document */
+    chunkIndex: number;
     /** Similarity score (lower is more similar for L2 distance) */
     score: number;
     /** Citation marker for LLM reference, e.g., "[1]" */
@@ -42,7 +45,7 @@ export interface QueryResult {
  * Format a source filename for citation
  * Removes file extension and cleans up the title
  */
-function formatSourceForCitation(source: string): string {
+export function formatSourceForCitation(source: string): string {
     // Remove .pdf extension
     let title = source.replace(/\.pdf$/i, '');
 
@@ -70,6 +73,7 @@ function formatRetrievedChunks(
             text: result.text,
             source: result.source,
             page: result.page,
+            chunkIndex: result.chunkIndex,
             score: result._distance,
             citationMarker,
             citation,
@@ -87,7 +91,7 @@ function buildContextString(chunks: RetrievedChunk[]): string {
     }
 
     const contextParts = chunks.map(chunk => {
-        return `${chunk.citationMarker} ${chunk.citation}\n${chunk.text}`;
+        return `Source ${chunk.citationMarker}: ${chunk.citation}\n${chunk.text}`;
     });
 
     const header = '=== Retrieved Knowledge ===\n\n';
@@ -154,15 +158,8 @@ export async function getContextForQuery(query: string, topK: number = 5): Promi
  * This combines the retrieved context with the user's question
  */
 export function buildRAGPrompt(context: string, query: string): string {
-    return `Use the following retrieved knowledge to answer the user's question. 
-If you use information from the retrieved knowledge, cite it using the format shown (Book Title, p. XX).
-If the answer is not found in the retrieved knowledge, say "I don't have information about that in my knowledge base."
-
-${context}
-
-User Question: ${query}
-
-Answer:`;
+    const systemPrompt = generateSystemPrompt(context);
+    return `${systemPrompt}\n\n## User Question:\n${query}\n\nAnswer:`;
 }
 
 export type { VectorRecord };

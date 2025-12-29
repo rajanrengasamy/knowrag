@@ -11,7 +11,7 @@ import { generateGeminiStream, generateGeminiResponse, GeminiError } from "./gem
 import { generateOpenAIStream, generateOpenAIResponse, OpenAIError } from "./openai";
 
 // Supported model identifiers
-export type ModelId = "gemini" | "openai";
+export type ModelId = "gemini" | "openai" | "gpt-4o";
 
 // Re-export error types
 export { GeminiError, OpenAIError };
@@ -57,6 +57,12 @@ export const AVAILABLE_MODELS: ModelInfo[] = [
         description: "OpenAI's efficient reasoning model",
         provider: "OpenAI",
     },
+    {
+        id: "gpt-4o",
+        name: "GPT-4o",
+        description: "OpenAI's multimodal model for vision + text",
+        provider: "OpenAI",
+    },
 ];
 
 /**
@@ -78,9 +84,9 @@ export interface StreamChunk {
  * Validates that the model ID is supported
  */
 function validateModelId(modelId: string): asserts modelId is ModelId {
-    if (modelId !== "gemini" && modelId !== "openai") {
+    if (modelId !== "gemini" && modelId !== "openai" && modelId !== "gpt-4o") {
         throw new LLMError(
-            `Unsupported model: ${modelId}. Available models: gemini, openai`,
+            `Unsupported model: ${modelId}. Available models: gemini, openai, gpt-4o`,
             modelId as ModelId,
             "INVALID_MODEL",
             false
@@ -107,8 +113,10 @@ export async function* generateResponse(
     try {
         if (modelId === "gemini") {
             yield* generateGeminiStream(context, query, images);
+        } else if (modelId === "openai") {
+            yield* generateOpenAIStream(context, query, images, "o4-mini");
         } else {
-            yield* generateOpenAIStream(context, query, images);
+            yield* generateOpenAIStream(context, query, images, "gpt-4o");
         }
     } catch (error: unknown) {
         // Wrap provider-specific errors in unified LLMError
@@ -149,8 +157,10 @@ export async function generateFullResponse(
     try {
         if (modelId === "gemini") {
             return await generateGeminiResponse(context, query, images);
+        } else if (modelId === "openai") {
+            return await generateOpenAIResponse(context, query, images, "o4-mini");
         } else {
-            return await generateOpenAIResponse(context, query, images);
+            return await generateOpenAIResponse(context, query, images, "gpt-4o");
         }
     } catch (error: unknown) {
         // Wrap provider-specific errors in unified LLMError

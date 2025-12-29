@@ -33,7 +33,6 @@ interface StatusResponse {
 export async function GET() {
     try {
         const stats = await getStats();
-
         const response: StatusResponse = {
             documents: stats.documentCount,
             chunks: stats.totalChunks,
@@ -58,7 +57,7 @@ export async function GET() {
                 error: errorMessage,
                 documents: 0,
                 chunks: 0,
-                ready: false
+                ready: false,
             },
             { status: 500 }
         );

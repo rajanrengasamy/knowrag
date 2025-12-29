@@ -4,7 +4,7 @@
  * Tests both Gemini and OpenAI integrations with hardcoded context
  * to verify citation format and proper response generation.
  * 
- * Usage: npx tsx scripts/test-llm.ts [--model gemini|openai|both]
+ * Usage: npx tsx scripts/test-llm.ts [--model gemini|openai|gpt-4o|both]
  */
 
 import * as path from "path";
@@ -48,7 +48,7 @@ const OUT_OF_SCOPE_QUERY = "What is the best cryptocurrency to invest in?";
 /**
  * Tests streaming response from a model
  */
-async function testStreamingResponse(modelId: "gemini" | "openai"): Promise<void> {
+async function testStreamingResponse(modelId: "gemini" | "openai" | "gpt-4o"): Promise<void> {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing ${modelId.toUpperCase()} Streaming Response`);
     console.log("=".repeat(60));
@@ -70,7 +70,8 @@ async function testStreamingResponse(modelId: "gemini" | "openai"): Promise<void
         console.log("\n");
 
         // Verify citation format
-        const hasCitation = fullResponse.includes("(The Intelligent Investor") ||
+        const hasCitation = /\[\d+\]/.test(fullResponse) ||
+            fullResponse.includes("(The Intelligent Investor") ||
             fullResponse.includes("(p.") ||
             fullResponse.includes("page");
         console.log(`✓ Citation check: ${hasCitation ? "PASS - Found citations" : "WARN - No standard citations found"}`);
@@ -87,7 +88,7 @@ async function testStreamingResponse(modelId: "gemini" | "openai"): Promise<void
 /**
  * Tests non-streaming response from a model
  */
-async function testFullResponse(modelId: "gemini" | "openai"): Promise<void> {
+async function testFullResponse(modelId: "gemini" | "openai" | "gpt-4o"): Promise<void> {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing ${modelId.toUpperCase()} Full Response`);
     console.log("=".repeat(60));
@@ -103,7 +104,8 @@ async function testFullResponse(modelId: "gemini" | "openai"): Promise<void> {
         console.log("\n");
 
         // Verify citation format
-        const hasCitation = response.includes("(The Intelligent Investor") ||
+        const hasCitation = /\[\d+\]/.test(response) ||
+            response.includes("(The Intelligent Investor") ||
             response.includes("(p.") ||
             response.includes("page");
         console.log(`✓ Citation check: ${hasCitation ? "PASS - Found citations" : "WARN - No standard citations found"}`);
@@ -120,7 +122,7 @@ async function testFullResponse(modelId: "gemini" | "openai"): Promise<void> {
 /**
  * Tests out-of-scope query handling
  */
-async function testOutOfScopeQuery(modelId: "gemini" | "openai"): Promise<void> {
+async function testOutOfScopeQuery(modelId: "gemini" | "openai" | "gpt-4o"): Promise<void> {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Testing ${modelId.toUpperCase()} Out-of-Scope Response`);
     console.log("=".repeat(60));
@@ -169,8 +171,8 @@ async function main(): Promise<void> {
         console.log(`  - ${model.id}: ${model.name} (${model.provider})`);
     }
 
-    const modelsToTest: ("gemini" | "openai")[] =
-        modelArg === "both" ? ["gemini", "openai"] : [modelArg as "gemini" | "openai"];
+    const modelsToTest: ("gemini" | "openai" | "gpt-4o")[] =
+        modelArg === "both" ? ["gemini", "openai", "gpt-4o"] : [modelArg as "gemini" | "openai" | "gpt-4o"];
 
     console.log(`\nTesting model(s): ${modelsToTest.join(", ")}`);
 

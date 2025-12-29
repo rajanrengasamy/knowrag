@@ -782,16 +782,32 @@ Create `.env.local`:
 ```bash
 OPENAI_API_KEY=sk-...        # Required for embeddings + o4-mini
 GOOGLE_API_KEY=AIza...       # Required for Gemini 3 Flash
+MAX_PDF_UPLOAD_MB=200        # Optional: PDF upload size limit
+MAX_PDF_COUNT=3              # Optional: Max PDFs per message
+TEMP_PDF_TTL_MS=600000       # Optional: Temp PDF cache TTL
+MAX_IMAGE_MB=5               # Optional: Image attachment size limit
+MAX_IMAGE_COUNT=4            # Optional: Max images per chat message
+NEXT_PUBLIC_MAX_PDF_UPLOAD_MB=200
+NEXT_PUBLIC_MAX_PDF_COUNT=3
 ```
 
-### Ingesting Documents
+### Attaching PDFs in Chat
+
+Attach up to 3 PDFs per message to query them alongside your existing knowledge base.
+These PDFs are stored temporarily under `data/uploads/`, processed in-memory (with a short cache), and **not** written into the vector database.
+
+Default limits:
+- Max PDF size: 200MB (configurable via `MAX_PDF_UPLOAD_MB`)
+- Max PDFs per message: 3 (`MAX_PDF_COUNT`)
+
+### Ingesting Documents (CLI)
 
 ```bash
 # Index a single PDF
-npx ts-node scripts/ingest.ts --file "The Intelligent Investor - BENJAMIN GRAHAM.pdf"
+npx tsx scripts/ingest.ts --file "The Intelligent Investor - BENJAMIN GRAHAM.pdf"
 
 # Index all PDFs (Phase 2)
-npx ts-node scripts/ingest.ts --all
+npx tsx scripts/ingest.ts --all
 ```
 
 ### Running the App
@@ -802,20 +818,37 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
+### Sanity Check (PDF Attachments)
+
+Start the dev server, then run:
+
+```bash
+npx tsx scripts/sanity-attachment.ts --pdf /path/to/file.pdf --query "Summarize this report"
+```
+
+### Cleanup Uploaded PDFs + Temp Cache
+
+If you want to clear `data/uploads/` and the in-memory PDF cache:
+
+```bash
+npx tsx scripts/cleanup-uploads.ts
+```
+
 ---
 
 ## Tech Stack
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| Framework | Next.js 14+ (App Router) | Full-stack React |
+| Framework | Next.js 16 (App Router) | Full-stack React |
 | Language | TypeScript | Type safety |
 | Styling | Tailwind CSS | Dark mode UI |
+| Motion | Motion | UI animation |
 | Vector DB | LanceDB | Embedded vector search |
-| RAG Engine | LlamaIndexTS | Document processing |
+| RAG Pipeline | Custom (pdf-parse + chunker) | Document processing |
 | Embeddings | OpenAI text-embedding-3-small | Text → vectors |
 | LLM | Gemini 3 Flash | Reasoning model |
-| LLM | OpenAI o4-mini | Reasoning model |
+| LLM | OpenAI o4-mini / GPT-4o | Reasoning + vision |
 | PDF Parser | pdf-parse | Extract text from PDFs |
 
 ---

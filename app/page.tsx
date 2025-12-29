@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from "motion/react";
 import { ModelSelector, type ModelType } from '@/components/ModelSelector';
 import { StatusIndicator } from '@/components/StatusIndicator';
-import { ChatInput } from '@/components/ChatInput';
+import { ChatInput, type PdfAttachment } from '@/components/ChatInput';
 import { ChatMessage, TypingIndicator, type Message } from '@/components/ChatMessage';
 
 /**
@@ -42,12 +42,16 @@ export default function Home() {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const isStreaming = messages.some(message => message.isStreaming);
+    messagesEndRef.current?.scrollIntoView({
+      behavior: isStreaming ? 'auto' : 'smooth',
+      block: 'end',
+    });
   }, [messages]);
 
   const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const handleSendMessage = useCallback(async (content: string, images: string[] = []) => {
+  const handleSendMessage = useCallback(async (content: string, images: string[] = [], pdfs: PdfAttachment[] = []) => {
     if (isLoading) return;
 
     if (abortControllerRef.current) {
@@ -62,6 +66,7 @@ export default function Home() {
       content,
       timestamp: new Date(),
       images: images.length > 0 ? images : undefined,
+      pdfs: pdfs.length > 0 ? pdfs.map(pdf => pdf.name) : undefined,
     };
 
     // If there are images, we might want to show them immediately
@@ -82,13 +87,15 @@ export default function Home() {
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
+      const requestModel = images.length > 0 ? 'gpt-4o' : selectedModel;
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: content,
-          model: selectedModel,
-          images: images // Send images to API
+          model: requestModel,
+          images: images,
+          pdfs,
         }),
         signal: abortControllerRef.current.signal,
       });

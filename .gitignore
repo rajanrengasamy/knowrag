@@ -44,3 +44,5 @@ knowledge/*.pdf
 
 # Vector database - keep local only
 /data/lancedb/
+# Uploaded PDFs - keep local only
+/data/uploads/

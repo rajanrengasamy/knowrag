@@ -6,7 +6,9 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sanity:attachment": "tsx scripts/sanity-attachment.ts",
+    "cleanup:uploads": "tsx scripts/cleanup-uploads.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

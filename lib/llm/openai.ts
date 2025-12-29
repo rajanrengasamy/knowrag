@@ -10,7 +10,8 @@ import { ChatCompletionContentPart } from "openai/resources/index";
 
 // OpenAI model configuration
 // o4-mini is a reasoning model that supports reasoning_effort parameter
-const OPENAI_MODEL = "o4-mini";
+const DEFAULT_OPENAI_MODEL = "o4-mini";
+type OpenAIModel = "o4-mini" | "gpt-4o";
 
 // Initialize the OpenAI client
 let client: OpenAI | null = null;
@@ -67,7 +68,8 @@ export interface StreamChunk {
 export async function* generateOpenAIStream(
     systemPrompt: string,
     userQuery: string,
-    images?: string[]
+    images?: string[],
+    model: OpenAIModel = DEFAULT_OPENAI_MODEL
 ): AsyncGenerator<StreamChunk> {
     try {
         const openai = getClient();
@@ -76,6 +78,13 @@ export async function* generateOpenAIStream(
         let userContent: string | ChatCompletionContentPart[] = userQuery;
 
         if (images && images.length > 0) {
+            if (model !== "gpt-4o") {
+                throw new OpenAIError(
+                    "Selected model does not support images. Please use GPT-4o for vision inputs.",
+                    "MODEL_NOT_VISION",
+                    false
+                );
+            }
             userContent = [
                 { type: "text", text: userQuery },
                 ...images.map(img => ({
@@ -88,13 +97,17 @@ export async function* generateOpenAIStream(
         // Create streaming chat completion with reasoning_effort: high
         // o4-mini supports low, medium, high reasoning effort levels
         const stream = await openai.chat.completions.create({
-            model: OPENAI_MODEL,
+            model,
             stream: true,
-            /**
-             * reasoning_effort: o4-mini's enhanced reasoning mode (low/medium/high)
-             * @since Dec 2024 - Requires openai v4.76.0+
-             */
-            reasoning_effort: "high",
+            ...(model === "o4-mini"
+                ? {
+                    /**
+                     * reasoning_effort: o4-mini's enhanced reasoning mode (low/medium/high)
+                     * @since Dec 2024 - Requires openai v4.76.0+
+                     */
+                    reasoning_effort: "high",
+                }
+                : {}),
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userContent },
@@ -174,7 +187,8 @@ export async function* generateOpenAIStream(
 export async function generateOpenAIResponse(
     systemPrompt: string,
     userQuery: string,
-    images?: string[]
+    images?: string[],
+    model: OpenAIModel = DEFAULT_OPENAI_MODEL
 ): Promise<string> {
     try {
         const openai = getClient();
@@ -183,6 +197,13 @@ export async function generateOpenAIResponse(
         let userContent: string | ChatCompletionContentPart[] = userQuery;
 
         if (images && images.length > 0) {
+            if (model !== "gpt-4o") {
+                throw new OpenAIError(
+                    "Selected model does not support images. Please use GPT-4o for vision inputs.",
+                    "MODEL_NOT_VISION",
+                    false
+                );
+            }
             userContent = [
                 { type: "text", text: userQuery },
                 ...images.map(img => ({
@@ -193,12 +214,16 @@ export async function generateOpenAIResponse(
         }
 
         const response = await openai.chat.completions.create({
-            model: OPENAI_MODEL,
-            /**
-             * reasoning_effort: o4-mini's enhanced reasoning mode (low/medium/high)
-             * @since Dec 2024 - Requires openai v4.76.0+
-             */
-            reasoning_effort: "high",
+            model,
+            ...(model === "o4-mini"
+                ? {
+                    /**
+                     * reasoning_effort: o4-mini's enhanced reasoning mode (low/medium/high)
+                     * @since Dec 2024 - Requires openai v4.76.0+
+                     */
+                    reasoning_effort: "high",
+                }
+                : {}),
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userContent },
@@ -219,7 +244,7 @@ export async function testOpenAIConnection(): Promise<boolean> {
     try {
         const openai = getClient();
         const response = await openai.chat.completions.create({
-            model: OPENAI_MODEL,
+            model: DEFAULT_OPENAI_MODEL,
             messages: [{ role: "user", content: "Reply with 'OK' if you can read this." }],
             max_completion_tokens: 10,
         });

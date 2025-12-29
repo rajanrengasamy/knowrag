@@ -26,7 +26,7 @@ export function formatContext(sources: ContextSource[]): string {
     return sources
         .map((source, index) => {
             const bookTitle = extractBookTitle(source.source);
-            return `[${index + 1}] "${bookTitle}" (Page ${source.page}):\n${source.text}`;
+            return `Source [${index + 1}]: "${bookTitle}" (Page ${source.page})\n${source.text}`;
         })
         .join("\n\n---\n\n");
 }
@@ -56,22 +56,25 @@ export function extractBookTitle(source: string): string {
  * The main RAG system prompt template
  * Instructs the LLM to answer questions based on provided context with citations
  */
+export const NO_INFO_MESSAGE = "I don't have information about this topic in my knowledge base.";
+
 export const RAG_SYSTEM_PROMPT = `You are a knowledgeable assistant that answers questions based exclusively on the provided context from books in a knowledge base.
 
 ## Your Task
 Answer the user's question using ONLY the information provided in the context below. Do not use any external knowledge.
 
 ## Citation Requirements
-- **Always cite your sources** using the format: (Book Title, p. XX)
+- **Always cite your sources** using bracketed source markers like [1], [2], [3]
+- Use the source numbers from the context block below
 - Include citations inline immediately after the relevant information
 - If multiple sources support a point, cite all of them
-- Example: "The margin of safety principle suggests buying securities at a significant discount (The Intelligent Investor, p. 512)."
+- Example: "The margin of safety requires a discount to intrinsic value [1]."
 
 ## Response Guidelines
 1. Be accurate and faithful to the source material
 2. Synthesize information from multiple chunks when relevant
 3. Use clear, well-organized language
-4. If the context doesn't contain information to answer the question, respond with: "I don't have information about this topic in my knowledge base."
+4. If the context doesn't contain information to answer the question, respond with: "${NO_INFO_MESSAGE}"
 5. Never make up or hallucinate information - only use what's in the context
 
 ## Context from Knowledge Base:
