@@ -13,7 +13,7 @@ import { Blob } from 'buffer';
 interface Args {
     pdfPath?: string;
     query: string;
-    model: 'gemini' | 'openai' | 'gpt-4o';
+    model: 'kimi' | 'gemini' | 'openai' | 'gpt-4o';
     host: string;
 }
 
@@ -21,7 +21,7 @@ function parseArgs(): Args {
     const args = process.argv.slice(2);
     const parsed: Args = {
         query: 'Summarize the key points in this PDF.',
-        model: 'openai',
+        model: 'kimi',
         host: 'http://localhost:3000',
     };
 
@@ -55,7 +55,7 @@ Usage:
 Options:
   --pdf     Path to a PDF file to attach
   --query   Question to ask
-  --model   gemini | openai | gpt-4o (default: openai)
+  --model   kimi | gemini | openai | gpt-4o (default: kimi)
   --host    Base URL for the running dev server (default: http://localhost:3000)
   --help    Show this help
 `);
@@ -67,7 +67,7 @@ async function uploadPdf(host: string, pdfPath: string): Promise<{ filename: str
 
     const formData = new FormData();
     const blob = new Blob([fileBuffer], { type: 'application/pdf' });
-    formData.append('file', blob, fileName);
+    formData.append('file', blob as unknown as globalThis.Blob, fileName);
 
     const response = await fetch(`${host}/api/uploads`, {
         method: 'POST',

@@ -34,7 +34,7 @@ const smoothPreset = { type: "spring" as const, stiffness: 300, damping: 35 };
  */
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedModel, setSelectedModel] = useState<ModelType>('gemini');
+  const [selectedModel, setSelectedModel] = useState<ModelType>('kimi');
   const [isLoading, setIsLoading] = useState(false);
   const [citationsMap, setCitationsMap] = useState<Map<string, Citation[]>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -87,13 +87,13 @@ export default function Home() {
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      const requestModel = images.length > 0 ? 'gpt-4o' : selectedModel;
+      // The two-stage pipeline (GPT-4o vision → selected model reasoning) is handled in the backend
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: content,
-          model: requestModel,
+          model: selectedModel,
           images: images,
           pdfs,
         }),

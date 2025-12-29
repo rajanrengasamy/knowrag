@@ -8,6 +8,174 @@ This file maintains session history for continuity across coding sessions.
 
 ---
 
+## Session: 2025-12-29 23:30 AEDT
+
+### Summary
+Completed comprehensive system prompt optimization analysis for enhanced RAG inference quality and anti-hallucination measures. Implemented improved prompts for the main RAG system, GPT-4o vision analysis, and Kimi K2 Thinking reasoning model.
+
+### Work Completed
+
+#### Analysis & Documentation
+- Created `docs/PROMPT_OPTIMIZATION_ANALYSIS.md` with detailed analysis of:
+  - Current RAG system prompt strengths and weaknesses
+  - Vision analysis prompt evaluation
+  - Anti-hallucination strategy recommendations
+  - Model-specific optimization opportunities
+  - Implementation priority recommendations
+
+#### Enhanced RAG System Prompt (`lib/prompts/rag-prompt.ts`)
+- Added **6 Core Principles** structure for clearer guidance
+- Implemented **Anti-Hallucination Verification** checklist (✓ Source present? ✓ Can cite?)
+- Added **Uncertainty & Gaps Handling** with structured partial-answer support
+- Enhanced **Citation Requirements** with verification-before-citing rule
+- Added **Reasoning Process** section to leverage advanced model capabilities
+- Improved **Response Structure** guidance
+
+#### Enhanced Vision Analysis Prompt (`lib/llm/openai.ts`)
+- Created **4-point Analysis Framework**:
+  1. Visual Description (composition, elements, layout)
+  2. Text & Data Extraction (with `[unclear: ...]` markers)
+  3. Contextual Insights (relevance to user question)
+  4. Confidence Notes (uncertainty flagging)
+- Added separate handling for single vs. multi-image scenarios
+- Enhanced system prompt with explicit accuracy-over-completeness principle
+- Added "No assumptions" instruction for downstream reasoning safety
+
+#### Kimi K2 Thinking Optimization (`lib/llm/openrouter.ts`)
+- Added **Reasoning Approach** suffix to leverage chain-of-thought capabilities
+- 5-step systematic verification process:
+  1. Identify relevant sources
+  2. Extract and verify information
+  3. Synthesize well-cited response
+  4. Verify every claim has citation support
+  5. Acknowledge information gaps
+- Applied to both streaming and non-streaming functions
+
+### Files Modified
+
+| File | Changes |
+|:-----|:--------|
+| `lib/prompts/rag-prompt.ts` | Complete rewrite with 6 Core Principles, anti-hallucination checklist |
+| `lib/llm/openai.ts` | Enhanced vision analysis with 4-point framework, uncertainty markers |
+| `lib/llm/openrouter.ts` | Added reasoning approach suffix for Kimi K2 Thinking (both functions) |
+| `docs/PROMPT_OPTIMIZATION_ANALYSIS.md` | New - comprehensive analysis document |
+
+### Verification
+| Test | Result |
+|:-----|:-------|
+| `npm run build` compiles without errors | ✅ Pass |
+
+### Key Improvements
+
+| Area | Before | After |
+|:-----|:-------|:------|
+| Anti-hallucination | Single "don't hallucinate" instruction | Explicit 2-point verification checklist |
+| Uncertainty handling | Only "no info" fallback | Structured partial-answer support |
+| Citations | Generic "cite sources" | Verify-before-citing requirement |
+| Vision analysis | Generic 4-point request | 4-point framework with confidence notes |
+| Reasoning models | No special optimization | 5-step systematic reasoning guidance |
+
+### Learnings
+- Advanced reasoning models (Kimi K2, o4-mini) respond well to explicit step-by-step reasoning instructions
+- Uncertainty markers (`[unclear: ...]`, "appears to be") help prevent confidence errors propagating to downstream reasoning
+- Citation verification instructions ("ensure source contains the information you're claiming") reduce citation-content mismatches
+- Structured partial-answer handling prevents both excessive refuses ("I don't know") and hallucinated gap-filling
+
+### Context for Next Session
+System prompts are now significantly enhanced for:
+- **Anti-hallucination**: Explicit verification checklist before including any claim
+- **Partial answers**: Structured handling for questions where some but not all information is available
+- **Citation accuracy**: Verification requirement before citing
+- **Reasoning quality**: Model-specific guidance for Kimi K2 Thinking's chain-of-thought
+
+Testing recommendations are documented in `docs/PROMPT_OPTIMIZATION_ANALYSIS.md` Section 6.
+
+---
+
+## Session: 2025-12-29 23:10 AEDT
+
+
+### Summary
+Expanded the knowledge base from 1 document to 14 documents by ingesting all available PDFs from the `knowledge/` folder. Created comprehensive task document for tracking the ingestion process.
+
+### Work Completed
+- Created `tasks/increaseKnowledge.md` with full ingestion workflow documentation
+- Executed batch ingestion: `npx tsx scripts/ingest.ts --all`
+- Successfully processed 16 PDFs from the knowledge folder
+- Embedded and stored 14,232 chunks in LanceDB
+- Verified retrieval works for new content (Porter's Five Forces, Dalio's Principles)
+
+### Ingestion Results
+
+| Metric | Before | After |
+|:-------|:-------|:------|
+| Documents | 1 | 14 |
+| Chunks | 1,707 | 14,232 |
+| Books Covered | 1 | 14 |
+
+### Documents Successfully Indexed
+
+1. Competitive advantage (Michael E. Porter)
+2. Competitive strategy (Michael E. Porter)
+3. Geopolitical alpha (Marko Papic)
+4. Guide to Economic Indicators (The Economist)
+5. Irrational Exuberance (Robert J. Shiller)
+6. Mapping the Markets (Deborah Owen, Robin Griffiths)
+7. Misbehaving (Richard H. Thaler)
+8. Principles: Life and Work (Ray Dalio)
+9. Prisoners of Geography
+10. The Intelligent Investor (Benjamin Graham)
+11. The Investment Checklist (Michael Shearn)
+12. The Education of a Value Investor (Guy Spier)
+13. Common Stocks and Uncommon Profits (Philip Fisher)
+14. Security Analysis (Benjamin Graham, 6th Edition)
+
+### Issues Noted
+
+| Issue | Cause | Resolution |
+|:------|:------|:-----------|
+| Warren Buffett book: 0 chunks | Likely image-based PDF (scanned text) | Requires OCR; deferred |
+| Competitive advantage (1).pdf | Duplicate file | Automatically skipped |
+| CBA Annual Reports not indexed | Located in `data/uploads/`, not `knowledge/` | Move to knowledge folder if needed |
+
+### Verification Tests
+
+| Query | Result |
+|:------|:-------|
+| "What are Porter's five forces?" | ✅ Retrieved chunks from Competitive Advantage & Competitive Strategy |
+| "What are Ray Dalio's principles for decision making?" | ✅ Retrieved chunks from Principles: Life and Work |
+| Citation format (source, page number) | ✅ Working correctly |
+
+### Key Decisions
+- **Batch ingestion via `--all` flag** - Most efficient approach for multiple PDFs
+- **Skip duplicate PDFs** - The ingestion script handles duplicates gracefully
+- **Image-based PDFs deferred** - OCR implementation needed for scanned documents
+
+### Open Items / Blockers
+- [ ] Implement OCR for image-based PDFs (Warren Buffett book)
+- [ ] Consider adding CBA Annual Reports from `data/uploads/` if needed
+- [ ] UI verification pending (StatusIndicator should show updated counts)
+
+### Context for Next Session
+Knowledge base is now significantly expanded with 14 books covering:
+- Value investing (Graham, Fisher, Buffett, Spier, Shearn)
+- Behavioral economics (Thaler, Shiller)
+- Strategy (Porter)
+- Geopolitics (Papic, Prisoners of Geography)
+- Economics (The Economist)
+- Life principles (Dalio)
+
+The system can now answer questions across a much broader range of investing, economics, and strategy topics.
+
+**Quick Stats:**
+```bash
+npx tsx scripts/ingest.ts --stats
+# Documents indexed: 14
+# Total chunks: 14,232
+```
+
+---
+
 ## Session: 2025-12-29 21:57 AEDT
 
 ### Summary

@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "motion/react";
 
 /**
  * Available LLM models
+ * 'kimi' is the default model for reasoning
  */
-export type ModelType = 'gemini' | 'openai' | 'gpt-4o';
+export type ModelType = 'kimi' | 'gemini' | 'openai' | 'gpt-4o';
 
 interface ModelOption {
     id: ModelType;
@@ -17,6 +18,13 @@ interface ModelOption {
 }
 
 const models: ModelOption[] = [
+    {
+        id: 'kimi',
+        name: 'Kimi K2 Thinking',
+        description: '1T MoE, 256K context (default)',
+        icon: '🌙',
+        color: 'var(--accent-primary)',
+    },
     {
         id: 'gemini',
         name: 'Gemini 3 Flash',
@@ -29,14 +37,14 @@ const models: ModelOption[] = [
         name: 'o4-mini',
         description: 'Fast reasoning model',
         icon: '⚡',
-        color: 'var(--accent-primary)',
+        color: 'var(--accent-tertiary)',
     },
     {
         id: 'gpt-4o',
         name: 'GPT-4o',
-        description: 'Vision + text (auto on images)',
-        icon: '🛰️',
-        color: 'var(--accent-tertiary)',
+        description: 'Vision analysis (auto with images)',
+        icon: '👁️',
+        color: 'var(--text-tertiary)',
     },
 ];
 

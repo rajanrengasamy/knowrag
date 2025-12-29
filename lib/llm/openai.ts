@@ -238,6 +238,133 @@ export async function generateOpenAIResponse(
 }
 
 /**
+ * Generates vision analysis from images using GPT-4o
+ * 
+ * Stage 1 of the two-stage pipeline:
+ * This function analyzes images and produces a detailed textual description
+ * that can be passed to the reasoning model (Kimi K2, etc.)
+ * 
+ * @param images - Array of base64 images
+ * @param userQuery - The user's question for context
+ * @returns Detailed text analysis of the images
+ */
+export async function generateVisionAnalysis(
+    images: string[],
+    userQuery: string
+): Promise<string> {
+    try {
+        const openai = getClient();
+
+        // Enhanced vision analysis prompt with structured extraction
+        const analysisPrompt = images.length > 1
+            ? `Analyze the following ${images.length} images comprehensively. Your analysis will be used by a reasoning AI to answer this question: "${userQuery}"
+
+## Analysis Framework
+
+For EACH image, provide a clearly labeled section:
+
+### Image [N]:
+
+**1. Visual Description**
+- Overall composition and subject matter
+- Key elements, objects, or figures present
+- Spatial relationships and layout
+
+**2. Text & Data Extraction**
+- ALL visible text (quote exactly, use [unclear: ...] for uncertain readings)
+- Numbers, statistics, dates
+- Charts/graphs: type, axes, key data points
+- Tables: structure and content
+
+**3. Contextual Insights**
+- Patterns or trends visible
+- Information specifically relevant to: "${userQuery}"
+
+**4. Confidence Notes**
+- Flag any elements that are partially visible, blurry, or ambiguous
+- Use "appears to be" or "likely" for uncertain interpretations
+- State "cannot determine" for unreadable/unclear elements
+
+## Quality Guidelines
+- Precision over assumption: when uncertain, say so
+- Extract all visible text verbatim when possible
+- Be thorough but focused on relevance to the question`
+            : `Analyze this image comprehensively. Your analysis will be used by a reasoning AI to answer this question: "${userQuery}"
+
+## Analysis Framework
+
+**1. Visual Description**
+- Overall composition and subject matter
+- Key elements, objects, or figures present
+- Spatial relationships and layout
+
+**2. Text & Data Extraction**
+- ALL visible text (quote exactly, use [unclear: ...] for uncertain readings)
+- Numbers, statistics, dates
+- Charts/graphs: type, axes, key data points
+- Tables: structure and content
+
+**3. Contextual Insights**
+- Patterns or trends visible
+- Information specifically relevant to: "${userQuery}"
+
+**4. Confidence Notes**
+- Flag any elements that are partially visible, blurry, or ambiguous
+- Use "appears to be" or "likely" for uncertain interpretations
+- State "cannot determine" for unreadable/unclear elements
+
+## Quality Guidelines
+- Precision over assumption: when uncertain, say so
+- Extract all visible text verbatim when possible
+- Be thorough but focused on relevance to the question`;
+
+        const userContent: ChatCompletionContentPart[] = [
+            { type: "text", text: analysisPrompt },
+            ...images.map(img => ({
+                type: "image_url" as const,
+                image_url: { url: img }
+            }))
+        ];
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "system",
+                    content: `You are an expert image analyst specializing in precise information extraction for downstream AI reasoning.
+
+Key requirements:
+1. **Accuracy over completeness**: Only report what you can clearly see
+2. **Uncertainty marking**: Explicitly flag low-confidence observations with [unclear: ...] or "appears to be"
+3. **Verbatim text extraction**: Quote visible text exactly as written when possible
+4. **Structured output**: Use clear headings and formatting for easy parsing
+5. **Question relevance**: Prioritize details likely to help answer the user's question
+6. **No assumptions**: Do not infer or assume information not visible in the image`
+                },
+                { role: "user", content: userContent }
+            ],
+            max_tokens: 4096,
+        });
+
+        return response.choices[0]?.message?.content || "Unable to analyze images.";
+    } catch (error: unknown) {
+        if (error instanceof OpenAI.APIError) {
+            throw new OpenAIError(
+                `Vision analysis failed: ${error.message}`,
+                "VISION_ANALYSIS_ERROR",
+                true
+            );
+        }
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        throw new OpenAIError(
+            `Vision analysis failed: ${errorMessage}`,
+            "VISION_ANALYSIS_ERROR",
+            true
+        );
+    }
+}
+
+/**
  * Tests the OpenAI connection with a simple prompt
  */
 export async function testOpenAIConnection(): Promise<boolean> {
@@ -254,3 +381,4 @@ export async function testOpenAIConnection(): Promise<boolean> {
         return false;
     }
 }
+

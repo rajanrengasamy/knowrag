@@ -4,7 +4,11 @@
  * POST /api/chat
  * Processes user queries through the RAG pipeline and streams LLM responses.
  * 
- * Request body: { query: string, model: "gemini" | "openai" }
+ * Two-Stage Pipeline for Images:
+ * When images are attached, GPT-4o analyzes them first,
+ * then the selected model (default: Kimi K2) uses that analysis for reasoning.
+ * 
+ * Request body: { query: string, model: "kimi" | "gemini" | "openai" | "gpt-4o" }
  * Response: Streaming text response with citations
  */
 
@@ -53,7 +57,7 @@ function validateRequest(body: unknown): body is ChatRequest {
         return false;
     }
 
-    if (model !== 'gemini' && model !== 'openai' && model !== 'gpt-4o') {
+    if (model !== 'kimi' && model !== 'gemini' && model !== 'openai' && model !== 'gpt-4o') {
         return false;
     }
 
@@ -141,7 +145,7 @@ export async function POST(request: NextRequest) {
         if (!validateRequest(body)) {
             return NextResponse.json(
                 {
-                    error: 'Invalid request. Required: { query: string, model: "gemini" | "openai" | "gpt-4o" }'
+                    error: 'Invalid request. Required: { query: string, model: "kimi" | "gemini" | "openai" | "gpt-4o" }'
                 },
                 { status: 400 }
             );
@@ -150,7 +154,8 @@ export async function POST(request: NextRequest) {
         const { query, model, images, pdfs } = body;
         const hasImages = Boolean(images && images.length > 0);
         const hasPdfs = Boolean(pdfs && pdfs.length > 0);
-        const effectiveModel: ModelId = hasImages ? 'gpt-4o' : model;
+        // No auto-switch: the two-stage pipeline (GPT-4o vision → selected model) is handled in lib/llm
+        const effectiveModel: ModelId = model;
 
         if (hasImages && images) {
             const imageError = validateImages(images);
@@ -168,8 +173,8 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const modelNote = hasImages && model !== 'gpt-4o' ? ` (auto-switched to gpt-4o)` : '';
-        console.log(`\n📩 Chat request: model=${effectiveModel}${modelNote}, query="${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"${images?.length ? ` + ${images.length} images` : ''}${pdfs?.length ? ` + ${pdfs.length} PDFs` : ''}`);
+        const pipelineNote = hasImages ? ' (two-stage: GPT-4o vision → reasoning)' : '';
+        console.log(`\n📩 Chat request: model=${effectiveModel}${pipelineNote}, query="${query.substring(0, 50)}${query.length > 50 ? '...' : ''}"${images?.length ? ` + ${images.length} images` : ''}${pdfs?.length ? ` + ${pdfs.length} PDFs` : ''}`);
 
         // Step 1: Embed the query once for all searches
         const queryEmbedding = await embedText(query);
